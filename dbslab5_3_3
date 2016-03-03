@@ -267,6 +267,74 @@ where v1.vendorid= v2.referredby);
 
 
 --DIVISION OPERATION
+--Approach1) Set operations
+--Approach2) Set Cardinality (#of tup)
 
+--Using Set operations
+
+--find whether stud has taken all courses req. taken A, req B
+--    if B-A is empty, he has done all
+select idno, name from students where not exists
+( (select courseno from enrollment where enrollment.idno = student.idno)
+  MINUS
+  (select courseno from graduate_requirments) --where g.programno=programs.programno
+);
+
+--find items by vendor st ing supp by that vendor are in the item 
+select name , companyname 
+from items it, vendors v
+where not exists (
+  select ingredientid -- ingredients supplied by vendor
+  from ingredients i where i.vendorid=v.vendorid
+  minus
+  select ingredientid -- ing used in item
+  from madewith m
+  where it.itemid = m.itemid);
+  
+--all vendors and items st all ing in the item are from same vendor
+select i.name , companyname
+from items i, vendors v
+where not exists (
+  ( select m.ingredientid   --ingredients used in item
+    from madewith m where i.itemid = m.itemid)
+    minus
+  ( select ingredientid     --ingredients spplied by vendors
+    from ingredients i
+    where i.vendorid = v.vendorid));
+    
+    
+-- Comparing relation cardinality
+-- whether for every combi of A and B, #of ele in A and B are equal or not
+
+--find items and vendors st all ingr in item are supplied by that vendor
+select i.name , companyname
+from items i, vendors v where
+( select count (distinct m.ingredientid)      --number if ingr in item
+  from madewith m   where i.itemid = m.itemid)    
+ -- from ingredients ing where ing.vendorid = v.vendorid)
+=                                       --no of ingr in item supp by vendor
+( select count(distinct m.ingredientid)
+  from madewith m, ingredients n
+  where i.itemid = m.itemid and m.ingredientid = n.ingredientid
+  and n.vendorid = v.vendorid
+);--from ingredients is for case when u want all items and vendors st all ingr
+      -- supplied by that vendor are in item
+      
+      
+-- SUBQUERIES IN THE SELECT CLAUSE
+-- both simple and correlated
+
+--for each ingr,list its inventory val, max inventory val of all ingr, and ratio
+    --of ingr's inventory val to avg inv val
+select name, unitprice * inventory as "Inventory Value", (select max(unitprice*
+    inventory) from ingredients) as "Max Value", (unitprice*inventory)/(select avg(
+        unitprice*inventory) from ingredients) as "ratio" 
+    from ingredients;
+
+
+--correlate subq in select clause work just like they do in where
+--list each ingr and its supplier
+select name, (select companyname from vendors v where v.vendorid = i.vendorid) as "Supplier"
+from ingredients i;
   
 
