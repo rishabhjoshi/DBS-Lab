@@ -1,0 +1,207 @@
+-- Sub queries
+
+-- USING =
+-- names of ings supplied by veggies r us
+select name, vendorid 
+from ingredients
+where vendorid= (select vendorid
+                  from vendors 
+                  where companyname = 'Veggies_R_Us');
+-- only columns of the outer most query appear in the result. Subqueries are 
+--  restricted in what they can return. 1st) col row cnt must match, 2nd) data
+--  types must be compatible.
+
+
+
+
+--using IN 
+-- ' = ' - inner may onlly return a single result with a single attr and row
+-- therefore we use IN if subquery returns multiple entries
+
+-- names of all ingr supplied by veggues r us or spring water supply
+select name, vendorid
+from ingredients
+where vendorid in 
+(
+  select vendorid from vendors where companyname = 'Veggies_R_Us' or 
+    companyname = 'Spring Water Supply');
+    
+    
+-- Avg unit price of all items by veggies r us
+select avg(unitprice) as avgprice
+--select unitprice
+from ingredients
+where vendorid in 
+( select vendorid from vendors where companyname = 'Veggies_R_Us');
+
+
+
+
+-- USING BETWEEN
+
+-- all ingr with inventory within 25% of the avg inventory of ingredients
+select name from ingredients where inventory between 
+( select avg(inventory) * 0.75 from ingredients) and
+  (select avg(inventory) * 1.25 from ingredients);
+  
+-- companies referred by veggies R us and provide an ingredient in milk food grp
+select companyname from vendors where 
+(referredby in ( select vendorid from vendors where companyname = 'Veggies_R_Us'))
+and 
+(vendorid IN (select vendorid from ingredients where foodgroup = 'Milk'));
+
+
+
+-- MULTILEVEL SUBQUERY NESTING
+select name, price from items where itemid in
+( select itemid from madewith where ingredientid in
+  ( select ingredientid from ingredients where vendorid = 
+    ( select vendorid from vendors where companyname = 'Veggies_R_Us')));
+    
+    
+--select vendorid from vendors where companyname = 'Veggies_R_Us';
+
+--select ingredientid from ingredients where vendorid = 
+ --   ( select vendorid from vendors where companyname = 'Veggies_R_Us');
+
+--select itemid from madewith where ingredientid in
+  --( select ingredientid from ingredients where vendorid = 
+    --( select vendorid from vendors where companyname = 'Veggies_R_Us'));
+    
+--for each sotre find tot sales of items made with ingredienats supplied by veggise
+--  r us . ignore meals and onlu consider stores with atleast 2 such items
+
+select storeid,count(*),  sum(price) as sales from orders where menuitemid in
+( select itemid from madewith where ingredientid in
+  ( select ingredientid from ingredients where vendorid =
+    ( select vendorid from vendors where companyname = 'Veggies_R_Us')))
+    group by storeid
+    having count(*) > 2
+    order by sales desc;
+    
+    
+    
+-- USING NOT IN
+-- all ingr by someone other than veggies_R_us
+select name from ingredients where vendorid not in
+( select vendorid from vendors where companyname = 'Veggies_R_Us');
+
+-- company name of small vendors who dont provide ingredients with laege inventories(>100)
+select companyname from vendors where vendorid not in
+( select vendorid from ingredients where inventory > 100);
+--flavouredcreams ought to be an ans. But Ing secret dressing doesnt have a vendor(null)
+select companyname from vendors where vendorid not in
+( select vendorid from ingredients where inventory > 100 and vendorid is not null);
+
+-- NOTE - IN over empty table always return FALSE
+--        NOT IN returns TRUE (for null)
+
+
+
+-- Subqueries with empty results
+--std comparison op req scalar val. if empty result of subquery, sql returns null
+
+select companyname from vendors where referredby = 
+( select vendorid from vendors where companyname = 'No Such Company');
+
+-- where referredby = null........... returns empty table
+
+-- when using IN, sql expects a table, if empty table IN returns false. (not in retursn true)
+select companyname from vendors where referredby not in
+( select vendorid from vendors where companyname = 'No Such Comp');
+-- here every row is returned
+
+
+
+
+-- Combining join and subqueries
+--name and price of all items uusing an ingre supplied by vegeis r us
+select distinct items.itemid , price
+from items join madewith on items.itemid = madewith.itemid
+where ingredientid in
+( select ingredientid from ingredients join vendors on vendors.vendorid = ingredients.vendorid
+  where companyname = 'Veggies_R_Us');
+------------------------------------------------
+
+
+-- Std comparison op with lists using ANY, SOME, ALL
+--USING ANY/ SOME -  exp true for atleast one row in subq result
+
+--all items that have a price > any salad item
+select name from items where price > any
+( select price from items where name Like '%Salad');
+  
+-- all ingrediens not supplied by veggiesR us or springwatersupply
+select name from ingredients where ingredientid not in
+( select ingredientid from ingredients where vendorid = any --- or us IN
+  ( select vendorid from vendors where companyname = 'Veggies_R_Us' or companyname = 'Spring Water Supply'));
+
+
+-------
+-- <>ANY != NOT IN... x <> ANY y returns true if any of val in y != x. 
+--                    n NOT IN y returns true if all of val in y!=x, or if y is empty.
+-------
+
+-- USING ALL - determines if exp evaluates to true for all rows in subq result
+--ing that cost at least as much as every ing in salad
+select name from ingredients where unitprice >= all
+( select unitprice from ingredients ing join madewith mw on
+    mw.ingredientid = ing.ingredientid join
+    items i on mw.itemid = i.itemid where i.name like '%Salad');
+    
+select name from ingredients where unitprice >= all
+( select unitprice from ingredients where ingredientid in
+  ( select ingredientid from madewith where itemid in
+    ( select itemid from items where name like '%Salad')));
+    -- SAME AS ABOVE.... WITHOUT JOINS
+    
+
+-- name of all ingr supplied by someone other that VeggieRUs or SpringWaterSupply
+select name from ingredients where vendorid <> any 
+( select vendorid from vendors where companyname = 'Veggies_R_Us' or companyname = 'Spring Water Supply');
+-- above q is NOT correct
+-- below q is correct
+select name from ingredients where ingredientid not in (select ingredientid from ingredients where vendorid= any
+( select vendorid from vendors where companyname = 'Veggies_R_Us' or companyname = 'Spring Water Supply'));
+
+--most expensive item
+select * from items where price >= all
+( select max(price) from items);
+
+select * from items where price = (select max(price) from items);
+
+------------------------------------------------------
+--NOTE - >=all is not eq to >=(select max())
+-- all returns true for if true for all rows in subq. null prices evaluate to unknown
+--    so result is empty. We can solve this by eliminating null prices. But then if 
+--    subq result is empty we have a problem
+
+-- '= ALL' op returns true if all of the rows in outer q match all the rows in inner q.
+--  THIS IS NOT THE CASE
+--    row in outer q will satisfy =ALL op only if it is equal to all the vals in the subq
+
+--    if inner q returns multiple rows each outer q row will only satisfy =all pred if all rows
+--      in inner q have teh same val and that val equals the outer q row val.
+--    Exact same result is ob by using = alone and ensuring that subq returns DISTINCT vals
+
+
+------------------------------------------------------
+
+
+
+
+-- Correlated Subqueries - not independent of outer q.
+-- 1st outer q is executed then inner q for each row of outer q
+
+--items with 3 or more ing
+select itemid, name from items where 
+( select count(*) from madewith where madewith.itemid = items.itemid) >= 3;
+-- we must use table name from outer in inner
+
+
+--vendors who referred 2 or more vendors
+select vendorid, companyname from vendors v1 where 
+( select count(*) from vendors v2 where v2.referredby = v1.vendorid) >= 2;
+
+
+-- EXISTS: 
