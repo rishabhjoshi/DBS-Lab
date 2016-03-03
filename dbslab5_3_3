@@ -205,3 +205,68 @@ select vendorid, companyname from vendors v1 where
 
 
 -- EXISTS: 
+--  condition that determines if any row exists in the result of the subq
+-- returns true if subq returns at least one row and false otherwise
+
+--meals containting ingredient from milkfood grp
+select * from meals m where exists
+( select * from partof p join items on p.itemid=items.itemid
+  join madewith on items.itemid=madewith.itemid
+  join ingredients on madewith.ingredientid=ingredients.ingredientid
+  where foodgroup= 'Milk' and m.mealid=p.mealid);
+  
+--vendors that didnt recommend any other vendor
+select vendorid , companyname from vendors v1 where not exists
+( select * from vendors v2 where v2.referredby = v1.vendorid);
+
+
+--DERIVED RELATIONS- Subq in the FROM clause
+
+--list name and inventory val of each ingredient in tfruit or vegetable food grp
+-- and its supplier
+select name , companyname, val from vendors v, 
+( select name , vendorid , unitprice*inventory as val from ingredients i
+  where foodgroup IN ('Fruit', 'Vegetable')) d 
+  where v.vendorid = d.vendorid;
+  -- the subq generates a derived table, we name this d.
+  -- next sql applies cart prod and join
+  -- FROM clause is executed first
+  -- When subq is exe, no rows from the other tables have been retrieved.
+  --*** Thus DBMS cant reference another table inside a subq in the FROM clause*****
+  
+--Advantages
+--1) break down complex queries into easier to understand parts
+--2) improve performance of some queries (if derived rel is smaller)
+
+
+
+--SUBQ in HAVING CLAUSE
+-- both simple and correlated
+-- works like where exc pred defined on grps(not rows)
+
+--find vendors who provide more ingredients than spring water supply
+select companyname from vendors v, ingredients i where i.vendorid=v.vendorid
+group by v.vendorid, companyname having count(*) > 
+( select count(*) from ingredients i, vendors v where i.vendorid=v.vendorid and
+  companyname like 'Spring %');
+  
+  
+--correlated subq in HAVING allow u sto evaluate per group conditionals
+
+--avg inventory vals for each vendor who recommends atleast one another vendor
+select v1.vendorid, v1.companyname, avg(unitprice*inventory)
+from ingredients join vendors v1 on (ingredients.vendorid=v1.vendorid)
+group by v1.vendorid, v1.companyname
+having exists (select *
+from vendors v2
+where v1.vendorid= v2.referredby);
+--query grps all ing by vendors. then for each vendor subq finds vendors 
+  --referred by that vendor. if subq returns any rows, exists returns true
+  --and vendorid,name, avg are included in final result
+  
+
+
+--DIVISION OPERATION
+
+  
+
