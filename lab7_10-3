@@ -1,0 +1,152 @@
+CREATE VIEW vrs AS
+SELECT ingredientid, name, inventory, inventory * unitprice AS value
+FROM ingredients i, vendors v
+Where I.Vendorid = V.Vendorid And Companyname = 'Veggies_R_Us';
+
+-----------------TRANSACTIONS-------------
+
+--commit
+SET TRANSACTION NAME ‘t1’;
+UPDATE vrs SET inventory = inventory + 10;
+SELECT * FROM vrs;
+Commit;
+SELECT * FROM vrs;
+
+--rollback
+SET TRANSACTION NAME ‘t2’;
+UPDATE vrs SET inventory = inventory -20;
+SELECT * FROM vrs;
+ROLLBACK;
+Select * From Vrs;
+
+------SAVEPOINTS-------
+Set Transaction Name 't3';
+UPDATE vrs SET inventory = inventory + 25;
+SELECT * FROM vrs;
+SAVEPOINT spoint1;
+UPDATE vrs SET inventory = inventory - 15;
+SELECT * FROM vrs;
+SAVEPOINT spoint2;
+UPDATE vrs SET inventory = inventory + 30;
+SELECT * FROM vrs;
+SAVEPOINT spoint3;
+ROLLBACK TO SAVEPOINT spoint1;
+Select * From Vrs;
+
+
+-----------------Exercises on employees database-------
+
+
+-------------------------PL/SQL--------------------------------------
+
+Declare 
+  Num_Age   Number(3) := 20;
+Begin
+  Num_Age := 20;
+  Dbms_Output.Put_Line('My age is : ' || To_Char(Num_Age));
+End;
+
+
+
+DECLARE
+ wages NUMBER;
+ hours_worked NUMBER := 40;
+ hourly_salary NUMBER := 22.50;
+ bonus NUMBER := 150;
+ country VARCHAR2(128);
+ counter NUMBER := 0;
+ done BOOLEAN;
+ valid_id BOOLEAN;
+ TYPE myarr IS VARRAY(10) of NUMBER; --array
+TYPE commissions IS TABLE OF NUMBER INDEX BY VARCHAR2(10); --associative array
+ t_arr myarr:= myarr();
+ comm_tab commissions;
+BEGIN
+ t_arr.extend; --append element
+ t_arr(1):=1;
+ t_arr.extend(2);
+ t_arr(2):=1;
+ t_arr(3):=1.9;
+wages := (hours_worked * hourly_salary) + bonus;
+ country := 'France';
+ done := (counter > 100);
+ valid_id := TRUE;
+ comm_tab('France') := 20000 * 0.15;
+ DBMS_OUTPUT.PUT_LINE( to_char(wages) || ' ' || country || ' '|| To_Char(Comm_Tab('France')) );
+END;
+
+
+
+Declare
+Creditlimit Number(20) := 10;
+withdrawal_amount number(20) := 20;
+over_withdrawal exception; --user defined exception
+begin
+if creditlimit < withdrawal_amount then
+raise over_withdrawal;
+end if;
+exception
+when over_withdrawal then
+DBMS_OUTPUT.PUT_LINE ('balance insufficient');
+End;
+
+
+--example of if
+DECLARE
+ v_PurchaseAmount NUMBER(9,2) := 1001;
+ v_DiscountAmount NUMBER(9,2);
+BEGIN
+ IF NOT (v_PurchaseAmount <= 1000) THEN
+ v_DiscountAmount := v_PurchaseAmount * 0.05;
+ END IF;
+ Dbms_Output.Put_Line('Discount: ' || To_Char(V_Discountamount));
+END;
+
+
+--example of if else
+Declare
+ v_CustomerStatus CHAR(3) := '&CustomerStatus'; --take input from user
+ v_PurchaseAmount NUMBER(9,2) := '&PurchaseAmount';
+ v_DiscountAmount NUMBER(9,2);
+BEGIN
+ IF v_CustomerStatus = 'AAA' THEN
+ IF v_PurchaseAmount > 1000 then
+ v_DiscountAmount := v_PurchaseAmount * 0.05;
+ ELSE
+ v_DiscountAmount := v_PurchaseAmount * 0.02;
+ END IF;
+ ELSE
+ v_DiscountAmount := 0;
+ END IF;
+ DBMS_OUTPUT.PUT_LINE('Discount: ' || TO_CHAR(v_DiscountAmount));
+End;
+
+
+
+--Example of WHILE LOOP:
+DECLARE
+ v_Counter NUMBER := 1;
+BEGIN
+ WHILE v_Counter < 5 LOOP
+ DBMS_OUTPUT.PUT_LINE('Count = ' || TO_CHAR(v_Counter));
+ v_Counter := v_Counter + 1;
+ END LOOP;
+End;
+
+
+
+--Example of FOR LOOP:
+DECLARE
+ v_Rate NUMBER(5,4) := 0.06/12;
+ v_Periods NUMBER := 12;
+ v_Balance NUMBER(9,2) := 0;
+BEGIN
+ FOR i IN 1..v_Periods LOOP -- loop number of periods
+ v_Balance := v_Balance + 50;
+ v_Balance := v_Balance + (v_Balance * v_Rate);
+ DBMS_OUTPUT.PUT_LINE('Balance for Period ' || TO_CHAR(i) || '
+' || TO_CHAR(v_Balance));
+ END LOOP;
+End;
+
+------------------EXERCISES-----------------
