@@ -150,3 +150,87 @@ BEGIN
 End;
 
 ------------------EXERCISES-----------------
+
+
+--EXERCISE
+create table temp
+();
+
+DECLARE
+enteredNumber NUMBER(4) := (&enter);
+BEGIN
+IF (enteredNumber>25) THEN
+  ignore;
+ELSE
+  for i in 1..enteredNumber LOOP
+    IF (i%5) != 0 then
+      Insert into temp values (i);
+    end if;
+    if i==5 then
+      insert(5,FIVE);
+    end if;
+  end loop;
+end if;
+  
+DBMS_OUTPUT.PUT_LINE('Discount: ' || TO_CHAR(enteredNumber));
+END;
+--------
+
+--STRINGS
+
+DECLARE
+name varchar2(20);
+company varchar2(30);
+introduction clob;
+choice char(1);
+BEGIN
+name := 'John Smith';
+company := 'Infotech';
+introduction := ' Hello! I''m John Smith from Infotech.';
+choice := 'y';
+IF choice = 'y' THEN
+dbms_output.put_line(name);dbms_output.put_line(company); dbms_output.put_line(introduction);
+END IF;
+END;
+
+
+DECLARE greetings varchar2(11) := 'hello world';
+BEGIN
+dbms_output.put_line(UPPER(greetings)); dbms_output.put_line(LOWER(greetings)); dbms_output.put_line(INITCAP(greetings));
+/* retrieve the first character in the string */
+dbms_output.put_line ( SUBSTR (greetings, 1, 1));
+/* retrieve the last character in the string */
+dbms_output.put_line ( SUBSTR (greetings, -1, 1));
+/* retrieve five characters,starting from the seventh position. */
+dbms_output.put_line ( SUBSTR (greetings, 7, 5));
+/* retrieve the remainder of the string, starting from the second position. */
+dbms_output.put_line ( SUBSTR (greetings, 2));
+/* find the location of the first "e" */
+dbms_output.put_line ( INSTR (greetings, 'e'));
+END;
+
+DECLARE
+greetings varchar2(30) := '......Hello World.....';
+BEGIN
+dbms_output.put_line(RTRIM(greetings,'.')); dbms_output.put_line(LTRIM(greetings, '.')); dbms_output.put_line(TRIM( '.' from greetings));
+END;
+
+
+
+--ARRAYS
+
+DECLARE
+type namesarray IS VARRAY(5) OF VARCHAR2(10);
+type grades IS VARRAY(5) OF INTEGER;
+names namesarray;
+marks grades;
+total integer;
+BEGIN
+names := namesarray('Kavita', 'Pritam', 'Ayan', 'Rishav', 'Aziz'); marks:= grades(98, 97, 78, 87, 92);
+total := names.count;
+dbms_output.put_line('Total '|| total || ' Students');
+FOR i in 1 .. total LOOP
+dbms_output.put_line('Student: ' || names(i) || '
+Marks: ' || marks(i));
+END LOOP;
+END;
