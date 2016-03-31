@@ -1,0 +1,204 @@
+-- Procedures -----------------------------------------------------------------
+--schema level - create procedure or create function/ drop it
+--inside pkg - delete only when pkg is deleted "drop pkg "
+--inside pl sql bkl invoked with a set of parameters - functions - ret 1 val,
+  --  procedures - dont return value, perform action
+  
+--The AS keyword is used instead of the IS keyword for creating a standalone procedure
+
+CREATE OR REPLACE PROCEDURE greetings
+AS
+BEGIN dbms_output.put_line('Hello World!');
+END;
+
+--execute standalone proc
+execute greetings;
+--or inside pl/sql
+BEGIN greetings; 
+END;
+
+--delete standalone proc
+BEGIN 
+DROP PROCEDURE greetings; 
+END;
+--DOESNT WORK as to EXECUTE DELETE U HAVE TO USE EXECUTE IMMEDIATE
+
+--**************************************
+BEGIN 
+EXECUTE IMMEDIATE
+'DROP PROCEDURE greetings';
+END;
+--**************************************
+
+--IN passed by reference as const, OUT and IN OUT passed by value and can change
+
+--Find min of 2 numbers
+DECLARE 
+a number;
+b number;
+c number;
+
+PROCEDURE findMin(x IN number, y IN number, z OUT number) IS
+BEGIN 
+  IF x < y THEN
+    z:= x; 
+  ELSE z:= y;
+  END IF; 
+END;
+
+BEGIN 
+  a:= 23;
+  b:= 45;
+  findMin(a, b, c);
+  dbms_output.put_line(' Minimum of (23, 45) : ' || c); 
+END;
+
+
+--compute square of value passed by value
+DECLARE 
+a number;
+PROCEDURE squareNum(x IN OUT number) IS 
+BEGIN 
+  x := x * x; 
+END; 
+BEGIN 
+  a:= 23;
+  squareNum(a);
+  dbms_output.put_line(' Square of (23): ' || a);
+END;
+
+
+--PASS parameters
+--positional notation, named notation, mixed notation
+
+--positional - findMin(a,b,c,d);
+--named - findMin(x=>a, z=>c, y=>b, m=>d);
+--mixed - findMin(a,b,c, m=>d);  LEGAL
+        --findMin(x=>a,b,c,d);   ILLEGAL
+        
+
+
+-- FUNCTIONS-------------------------------------------------------------------
+--same as proc exc it returns a value
+
+--create standalone
+select * from customers;
+
+CREATE OR REPLACE FUNCTION totalCustomers RETURN number IS 
+total number(2) := 0;
+BEGIN 
+  SELECT count(*) into total 
+  FROM customers; 
+  RETURN total;
+END;
+
+-- call standalone function
+DECLARE 
+  c number(2); 
+BEGIN 
+  c := totalCustomers(); 
+  dbms_output.put_line('Total no. of Customers: ' || c);
+END;
+
+--example
+DECLARE 
+a number;
+b number;
+c number;
+FUNCTION findMax(x IN number, y IN number) 
+RETURN number IS
+z number;
+BEGIN 
+  IF x > y THEN 
+    z:= x; 
+  ELSE 
+    Z:= y; 
+  END IF; 
+  RETURN z; 
+END;
+
+BEGIN
+  a:= 23; 
+  b:= 45; 
+  c := findMax(a, b);
+  dbms_output.put_line(' Maximum of (23,45): ' || c);
+END;
+
+
+--PL/SQL recursive functions
+--factorial
+Declare 
+num number;
+factorial number;
+
+function fact(x number)
+return number is f number;
+begin
+  if(x=0) then
+    f:= 1;
+  else
+    f:= x* fact(x-1);
+  end if;
+  
+  return f;
+end;
+
+begin
+  num:=6;
+  factorial := fact(num);
+  dbms_output.put_line(' Factorial '||num||' is ' ||factorial);
+end;
+
+
+
+
+
+--CURSOR-----------------------------------------------------------------------
+--prog updates table increase sal of each cust by 500 and use sql%rowcount to determine rows affected
+
+--Implicit cursors, automatically defined by sql
+DECLARE 
+total_rows number(2);
+
+BEGIN 
+  UPDATE customers
+  SET salary = salary + 500
+--  where name='risjnj';  uncomment for no cust selected
+  
+  IF sql%notfound THEN 
+    dbms_output.put_line('no customers selected'); 
+  ELSIF sql%found THEN 
+    total_rows := sql%rowcount; 
+    dbms_output.put_line( total_rows || ' customers selected '); 
+  END IF;
+END;
+
+--explicit cursors
+--4steps - declare cursor for intializing in memory, 
+        -- opening cursor for allocating memory
+        -- fetching cursor for retrueving data
+        -- closing cursor to release allocated memory
+        
+--declaring oepning fetching closing
+
+CURSOR c_customers IS SELECT idno, name, address FROM customers;
+OPEN c_customers;
+FETCH c_customers INTO c_id, c_name, c_addr;
+CLOSE c_customers;
+
+--eg
+DECLARE
+c_id customers.idno%type;
+c_name customers.name%type; 
+c_addr customers.address%type; 
+
+CURSOR c_customers is SELECT idno, name, address FROM customers; 
+BEGIN
+  OPEN c_customers;
+  LOOP
+    FETCH c_customers into c_id, c_name, c_addr; 
+    dbms_output.put_line(c_id || ' ' || c_name || ' ' || c_addr); 
+    EXIT WHEN c_customers%notfound; 
+  END LOOP; 
+  CLOSE c_customers; 
+END;
