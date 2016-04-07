@@ -202,3 +202,128 @@ BEGIN
   END LOOP; 
   CLOSE c_customers; 
 END;
+
+
+
+
+------------------------------------------------------------------------------------ 7/4/16
+CURSOR c_customers IS SELECT idno, name, address FROM customers;
+
+
+DECLARE 
+  c_id customers.idno%type; 
+  c_name customers.name%type; 
+  c_addr customers.address%type;
+  CURSOR c_customers is SELECT idno, name, address FROM customers; 
+BEGIN 
+  OPEN c_customers; 
+  LOOP FETCH c_customers into c_id, c_name, c_addr; 
+    dbms_output.put_line(c_id || ' ' || c_name || ' ' || c_addr); 
+    EXIT WHEN c_customers%notfound; 
+  END LOOP; 
+  CLOSE c_customers; 
+END;
+
+--RECORDS
+--table based -  %rowtype
+
+DECLARE 
+  customer_rec customers%rowtype; 
+BEGIN 
+  SELECT * into customer_rec FROM customers WHERE idno = 5; 
+  dbms_output.put_line('CustomerID:'||customer_rec.idno); 
+  dbms_output.put_line('CustomerName:'||customer_rec.name); 
+  dbms_output.put_line('CustomerAddress:'||customer_rec.address); 
+  dbms_output.put_line('Customer Salary: ' || customer_rec.salary);
+END;
+
+--cursor based
+
+declare
+  cursor customer_cur is
+    select idno, name, address from customers;
+  customer_rec customer_cur%rowtype;
+begin
+  open customer_cur;
+  loop
+    fetch customer_cur into customer_rec;
+    exit when customer_cur%notfound;
+    dbms_output.put_line(customer_rec.idno || ' ' || customer_rec.name);
+  end loop;
+end;
+
+--user defined records
+
+--defining
+DECLARE 
+  TYPE books IS RECORD 
+    ( title varchar(50), 
+      author varchar(50), 
+      subject varchar(100), 
+      book_id number  ); 
+  book1 books; 
+  book2 books;
+  
+--access using '.' dot operator
+--run including up
+BEGIN
+  --book1 specification
+  book1.title := 'C Programming';
+  book1.author := 'Nuha Ali';
+  book1.subject := 'C programming tutorial';
+  book1.book_id := 6495407;
+
+  --book2 specification
+  book2.title := 'Telecom Billing';
+  book2.author := 'Zara Ali';
+  book2.subject := 'Telecom billing tutorial';
+  book2.book_id := 6495700;
+
+  --print book1 record
+  dbms_output.put_line('Book1 title : '|| book1.title);
+  dbms_output.put_line('Book1 author : '|| book1.author);
+  dbms_output.put_line('Book1 subject : '|| book1.subject);
+  dbms_output.put_line('Book1 book_id: '|| book1.book_id);
+  
+  --print book2 record
+  dbms_output.put_line('Book2 title : '|| book2.title);
+  dbms_output.put_line('Book2 author : '|| book2.author);
+  dbms_output.put_line('Book2 subject : '|| book2.subject);
+  dbms_output.put_line('Book2 book_id : '|| book2.book_id);
+end;
+
+--Records as subprograms parameters
+DECLARE 
+  TYPE books IS RECORD 
+    ( title varchar(50), 
+      author varchar(50), 
+      subject varchar(100), 
+      book_id number  ); 
+  book1 books; 
+  book2 books;
+
+procedure printbook (book books) is
+begin
+  dbms_output.put_line('Book1 title : '|| book1.title);
+  dbms_output.put_line('Book1 author : '|| book1.author);
+  dbms_output.put_line('Book1 subject : '|| book1.subject);
+  dbms_output.put_line('Book1 book_id: '|| book1.book_id);
+end;
+
+BEGIN
+  --book1 specification
+  book1.title := 'C Programming';
+  book1.author := 'Nuha Ali';
+  book1.subject := 'C programming tutorial';
+  book1.book_id := 6495407;
+
+  --book2 specification
+  book2.title := 'Telecom Billing';
+  book2.author := 'Zara Ali';
+  book2.subject := 'Telecom billing tutorial';
+  book2.book_id := 6495700;
+  
+  --use procedure
+  printbook(book1);
+  printbook(book2);
+end;
